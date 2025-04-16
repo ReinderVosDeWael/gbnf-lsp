@@ -1,3 +1,4 @@
+import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import {
@@ -10,6 +11,29 @@ import * as fs from "fs";
 let client: LanguageClient;
 let outputChannel: vscode.OutputChannel;
 
+function getPlatformBinary(context: vscode.ExtensionContext): string {
+  const platform = os.platform();
+  const arch = os.arch();
+
+  let binName = "gbnf-engine";
+  let folder = "";
+
+  if (platform === "win32") {
+    binName += ".exe";
+    folder = "windows";
+  } else if (platform === "linux") {
+    folder = "linux";
+  } else if (platform === "darwin" && arch === "arm64") {
+    folder = "darwin-arm64";
+  } else if (platform === "darwin") {
+    folder = "darwin";
+  } else {
+    throw new Error(`Unsupported platform: ${platform} ${arch}`);
+  }
+
+  return path.join(context.extensionPath, "bin", folder, binName);
+}
+
 export function activate(context: vscode.ExtensionContext) {
   // Create output channel for logging
   outputChannel = vscode.window.createOutputChannel("GBNF LSP");
@@ -18,10 +42,8 @@ export function activate(context: vscode.ExtensionContext) {
   outputChannel.appendLine("Extension activating...");
 
   try {
-    // Path to your Go LSP executable
-    const serverPath = path.join(context.extensionPath, "/build/go-src.exe");
+    const serverPath = getPlatformBinary(context);
 
-    // Make sure the LSP executable exists and is executable
     if (!fs.existsSync(serverPath)) {
       outputChannel.appendLine(`ERROR: LSP server not found at ${serverPath}`);
       vscode.window.showErrorMessage(
@@ -32,7 +54,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     outputChannel.appendLine(`Found LSP server at: ${serverPath}`);
 
-    // Server options - defining how to start your LSP
     const serverOptions: ServerOptions = {
       run: { command: serverPath, args: [], options: { shell: true } },
       debug: {
@@ -42,13 +63,11 @@ export function activate(context: vscode.ExtensionContext) {
       },
     };
 
-    // Client options
     const clientOptions: LanguageClientOptions = {
       documentSelector: [{ scheme: "file", language: "gbnf" }],
       outputChannel: outputChannel,
     };
 
-    // Create client
     client = new LanguageClient(
       "gbnfLanguageServer",
       "GBNF Language Server",
@@ -58,7 +77,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     outputChannel.appendLine("Starting LSP client...");
 
-    // Start client with proper error handling
     client.start().then(
       () => {
         outputChannel.appendLine("LSP client started successfully");

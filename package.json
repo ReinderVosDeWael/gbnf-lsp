@@ -1,11 +1,17 @@
 {
-  "name": "gbnf-lsp",
+  "name": "gbnf-engine",
   "displayName": "GBNF Language Support",
   "description": "An LSP for GBNF",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.99.0"
   },
+  "files": [
+    "bin/linux/**",
+    "bin/windows/**",
+    "bin/darwin/**",
+    "bin/darwin-arm64/**"
+  ],
   "categories": [
     "Other"
   ],
@@ -36,7 +42,13 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "build:go:windows": "cross-env go build -o ./bin/windows/gbnf-engine.exe ./gbnf-engine/main.go",
+    "build:go:linux": "cross-env GOOS=linux GOARCH=amd64 go build -o ./bin/linux/gbnf-engine ./gbnf-engine/main.go",
+    "build:go:darwin": "cross-env GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin/gbnf-engine ./gbnf-engine/main.go",
+    "build:go:darwin-arm64": "cross-env GOOS=darwin GOARCH=arm64 go build -o ./bin/darwin-arm64/gbnf-engine ./gbnf-engine/main.go",
+    "build:go": "npm-run-all build:go:*",
+    "build": "npm run compile && npm run build:go"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -46,7 +58,9 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
+    "cross-env": "^7.0.3",
     "eslint": "^9.23.0",
+    "npm-run-all": "^4.1.5",
     "typescript": "^5.8.2"
   },
   "dependencies": {

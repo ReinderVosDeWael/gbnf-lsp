@@ -3,7 +3,7 @@ package lsp
 import (
 	"encoding/json"
 	"fmt"
-	"gbnflsp/go-src/GBNFParser"
+	"gbnflsp/gbnf-engine/GBNFParser"
 	"os"
 )
 

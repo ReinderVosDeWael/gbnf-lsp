@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gbnflsp/go-src/lsp"
+	"gbnflsp/gbnf-engine/lsp"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"gbnflsp/go-src/GBNFParser"
+	"gbnflsp/gbnf-engine/GBNFParser"
 )
 
 func CollectTokens(input string) ([]*GBNFParser.Token, []*GBNFParser.LexerError) {
