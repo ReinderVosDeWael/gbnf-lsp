@@ -7,10 +7,9 @@
     "vscode": "^1.99.0"
   },
   "files": [
-    "bin/linux/**",
-    "bin/windows/**",
-    "bin/darwin/**",
-    "bin/darwin-arm64/**"
+    "bin/**",
+    "out/**",
+    "syntaxes/**"
   ],
   "categories": [
     "Other"
