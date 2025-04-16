@@ -14,17 +14,15 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: '1.24'
 
-      - name: Build Go LSP server
-        run: |
-          mkdir -p build
-          go build -o build/gbnf-engine ./gbnf-engine
+      - name: Test Go
+        run: go test ./gbnf-engine/tests
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm ci
+          node-version: 21
+      - run: npm ci && npm run build
       - name: Publish to Open VSX Registry
         uses: HaaLeo/publish-vscode-extension@v2
         with:

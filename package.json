@@ -43,7 +43,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "build:go:windows": "cross-env go build -o ./bin/windows/gbnf-engine.exe ./gbnf-engine/main.go",
+    "build:go:windows": "cross-env GOOS=windows GOARCH=amd64 go build -o ./bin/windows/gbnf-engine.exe ./gbnf-engine/main.go",
     "build:go:linux": "cross-env GOOS=linux GOARCH=amd64 go build -o ./bin/linux/gbnf-engine ./gbnf-engine/main.go",
     "build:go:darwin": "cross-env GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin/gbnf-engine ./gbnf-engine/main.go",
     "build:go:darwin-arm64": "cross-env GOOS=darwin GOARCH=arm64 go build -o ./bin/darwin-arm64/gbnf-engine ./gbnf-engine/main.go",
