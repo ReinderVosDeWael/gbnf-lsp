@@ -1,0 +1,35 @@
+{
+    "name": "GBNF",
+    "scopeName": "source.gbnf",
+    "patterns": [
+        {
+            "match": "::=",
+            "name": "keyword.operator.assignment.gbnf"
+        },
+        {
+            "match": "\"[^\"]*\"",
+            "name": "string.quoted.double.gbnf"
+        },
+        {
+            "match": "\\|",
+            "name": "keyword.operator.alternative.gbnf"
+        },
+        {
+            "match": "[a-zA-Z_][a-zA-Z0-9_]*",
+            "name": "variable.other.gbnf"
+        },
+        {
+            "match": "#.*",
+            "name": "comment.line.number-sign.gbnf"
+        },
+        {
+            "begin": "\\[",
+            "end": "\\]",
+            "name": "string.regexp.gbnf"
+        }
+    ],
+    "fileTypes": [
+        "gbnf"
+    ],
+    "uuid": "ccc4f385-3e40-4d04-80a8-f2e578258d8c"
+}
