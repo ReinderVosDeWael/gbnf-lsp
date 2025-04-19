@@ -66,6 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
     const clientOptions: LanguageClientOptions = {
       documentSelector: [{ scheme: "file", language: "gbnf" }],
       outputChannel: outputChannel,
+      traceOutputChannel: outputChannel,
     };
 
     client = new LanguageClient(

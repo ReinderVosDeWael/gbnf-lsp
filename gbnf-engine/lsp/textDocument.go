@@ -50,7 +50,6 @@ func handleTextDocumentDidChange(request Request) {
 		return
 	}
 
-	debugLogger.Print("Text change: " + data.ContentChanges[0].Text)
 	newFile := TextToOpenFile(data.ContentChanges[0].Text)
 	openFiles[data.TextDocument.URI] = &newFile
 	sendDiagnostics(data.TextDocument.URI)
@@ -104,15 +103,16 @@ func createDiagnostics(uri string) []Diagnostic {
 	errors := file.ParserErrors
 	diags := []Diagnostic{}
 	for _, err := range errors {
+		debugLogger.Printf("Found error: %v", err)
 		diags = append(diags, Diagnostic{
 			Range: Range{
 				Start: Position{
 					Line:      err.Line,
-					Character: err.Column,
+					Character: err.Column - 1, // VSCode starts the line _after_ this character.
 				},
 				End: Position{
 					Line:      err.Line,
-					Character: err.Column + err.Length,
+					Character: err.Column + err.Length - 1,
 				},
 			},
 			Message:  err.Message,
@@ -135,5 +135,62 @@ func sendDiagnostics(uri string) {
 	}
 
 	data, _ := json.Marshal(msg)
+	fmt.Printf("Content-Length: %d\r\n\r\n%s", len(data), data)
+}
+
+type CompletionParams struct {
+	TextDocument struct {
+		URI string `json:"uri"`
+	} `json:"textDocument"`
+	Position struct {
+		Line      int `json:"line"`
+		Character int `json:"character"`
+	} `json:"position"`
+}
+
+type CompletionItem struct {
+	Label      string `json:"label"`
+	Kind       int    `json:"kind,omitempty"` // 6 = Variable
+	Detail     string `json:"detail,omitempty"`
+	InsertText string `json:"insertText,omitempty"`
+}
+
+type CompletionList struct {
+	IsIncomplete bool             `json:"isIncomplete"`
+	Items        []CompletionItem `json:"items"`
+}
+
+func handleTextDocumentCompletion(request Request) {
+	var params CompletionParams
+	err := json.Unmarshal(request.Params, &params)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to unmarshal completion params: %v\n", err)
+		return
+	}
+
+	file := openFiles[params.TextDocument.URI]
+	var items []CompletionItem
+
+	for _, name := range file.GetRuleNames() {
+		items = append(items, CompletionItem{
+			Label:      name,
+			Kind:       6,
+			Detail:     "Rule",
+			InsertText: name,
+		})
+	}
+
+	result := CompletionList{
+		IsIncomplete: false,
+		Items:        items,
+	}
+
+	response := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      request.ID,
+		"result":  result,
+	}
+
+	data, _ := json.Marshal(response)
 	fmt.Printf("Content-Length: %d\r\n\r\n%s", len(data), data)
 }

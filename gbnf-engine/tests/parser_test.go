@@ -59,6 +59,29 @@ func TestParserAlternativeRule(t *testing.T) {
 	}
 }
 
+func TestParserAlternativeRuleMultiline(t *testing.T) {
+	tokens, _ := CollectTokens(`rule ::= "yes" | 
+										 "no"`)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(node.Children) != 1 || node.Children[0].Type != GBNFParser.NodeAlternative {
+		t.Errorf("Expected NodeAlternative, got %+v", node.Children[0])
+	}
+
+	alts := node.Children[0].Children
+	expected := []string{"yes", "no"}
+	for i, alt := range alts {
+		if alt.Token.Value != expected[i] {
+			t.Errorf("Expected alternative '%s', got '%s'", expected[i], alt.Token.Value)
+		}
+	}
+}
+
 func TestParserNestedExpressions(t *testing.T) {
 	tokens, _ := CollectTokens(`rule ::= ("a" | "b")*`)
 	parser := GBNFParser.Parser{Tokens: tokens}

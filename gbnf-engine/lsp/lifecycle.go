@@ -6,6 +6,10 @@ func handleInitialize(request Request) {
 	result := map[string]interface{}{
 		"capabilities": map[string]interface{}{
 			"textDocumentSync": 1,
+			"completionProvider": map[string]interface{}{
+				"resolveProvider":   false,
+				"triggerCharacters": []string{"|", "=", " "},
+			},
 		},
 	}
 	sendResponse(request.ID, result)

@@ -1,11 +1,13 @@
 {
   "name": "gbnf-engine",
-  "displayName": "GBNF Language Support",
+  "publisher": "ReinderVosdeWael",
+  "displayName": "GBNF LSP",
   "description": "An LSP for GBNF",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.99.0"
   },
+  "repository": "https://github.com/ReinderVosDeWael/gbnf-lsp",
   "files": [
     "bin/**",
     "out/**",

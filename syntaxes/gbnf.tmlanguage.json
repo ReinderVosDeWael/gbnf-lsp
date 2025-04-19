@@ -3,29 +3,56 @@
     "scopeName": "source.gbnf",
     "patterns": [
         {
-            "match": "::=",
-            "name": "keyword.operator.assignment.gbnf"
+            "match": "\\b([a-zA-Z][a-zA-Z0-9]*)\\s*::=",
+            "captures": {
+                "1": {
+                    "name": "entity.name.function.gbnf"
+                }
+            }
+        },
+        {
+            "match": "\\b([a-zA-Z][a-zA-Z0-9]*)\\b",
+            "name": "variable.parameter.gbnf"
         },
         {
             "match": "\"[^\"]*\"",
             "name": "string.quoted.double.gbnf"
         },
         {
-            "match": "\\|",
-            "name": "keyword.operator.alternative.gbnf"
+            "begin": "\\[",
+            "end": "\\]",
+            "name": "string.regexp.gbnf"
         },
         {
-            "match": "[a-zA-Z_][a-zA-Z0-9_]*",
-            "name": "variable.other.gbnf"
+            "match": "\\{(\\d+)\\}",
+            "captures": {
+                "1": {
+                    "name": "constant.numeric.repeat.gbnf"
+                }
+            }
+        },
+        {
+            "match": "\\{(\\d+),(\\d+)\\}",
+            "captures": {
+                "1": {
+                    "name": "constant.numeric.repeat.gbnf"
+                },
+                "2": {
+                    "name": "constant.numeric.repeat.gbnf"
+                }
+            }
         },
         {
             "match": "#.*",
             "name": "comment.line.number-sign.gbnf"
         },
         {
-            "begin": "\\[",
-            "end": "\\]",
-            "name": "string.regexp.gbnf"
+            "match": "\\|",
+            "name": "keyword.operator.alternative.gbnf"
+        },
+        {
+            "match": "[\\*|\\+|\\?]",
+            "name": "keyword.operator.repeat.gbnf"
         }
     ],
     "fileTypes": [

@@ -31,6 +31,39 @@ type OpenFile struct {
 	ParserErrors []*GBNFParser.ParseError
 }
 
+func (file OpenFile) GetRuleNames() []string {
+	rules := recursiveGetRules(file.AST)
+	uniqueRulesMap := make(map[string]bool)
+	for _, rule := range rules {
+		uniqueRulesMap[rule] = true
+	}
+
+	uniqueRules := []string{}
+	for key := range uniqueRulesMap {
+		uniqueRules = append(uniqueRules, key)
+	}
+	return uniqueRules
+
+}
+
+func recursiveGetRules(node *GBNFParser.Node) []string {
+	rules := []string{}
+	debugLogger.Print(node)
+	if node != nil {
+		if node.Token != nil {
+			if node.Token.Type == GBNFParser.TokenIdentifier {
+				debugLogger.Print("rule")
+				debugLogger.Print(node.Token)
+				rules = append(rules, node.Token.Value)
+			}
+		}
+		for _, child := range node.Children {
+			rules = append(rules, recursiveGetRules(child)...)
+		}
+	}
+	return rules
+}
+
 func TextToOpenFile(text string) OpenFile {
 	lexer := GBNFParser.NewLexer(text)
 	debugLogger.Print("Tokenizing...")

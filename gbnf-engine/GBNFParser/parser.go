@@ -171,11 +171,21 @@ func (parser *Parser) forwardTillNextLine() {
 }
 
 func (parser *Parser) parseExpression() ([]*Node, *ParseError) {
-	token := parser.peek()
 	nodes := []*Node{}
+	lastTokenAlternative := false
 
 Loop:
-	for token.Type != TokenEOL {
+	for {
+		token := parser.peek()
+		if token.Type == TokenEOL && !lastTokenAlternative {
+			break
+		}
+		if token.Type == TokenEOL {
+			parser.next()
+			continue
+		}
+
+		lastTokenAlternative = false
 		token = parser.next()
 		switch token.Type {
 
@@ -198,6 +208,7 @@ Loop:
 
 		case TokenAlternative:
 			// Alternatives are done after parsing the entire expression.
+			lastTokenAlternative = true
 			nodes = append(nodes, &Node{Type: NodeAlternative, Min: 1, Max: 1, Token: token})
 		case TokenString, TokenRegexp, TokenIdentifier:
 			nodes = append(nodes, &Node{Token: token, Min: 1, Max: 1, Type: NodeToken})
@@ -277,6 +288,11 @@ func (parser *Parser) parseAlternatives(nodes []*Node) ([]*Node, *ParseError) {
 			newNodes[len(newNodes)-1] = node
 		}
 		index++
+	}
+
+	// Ensure end-of-line alternative is handled correctly.
+	if parser.peek().Type == TokenEOL {
+		parser.next()
 	}
 	return newNodes, nil
 }
