@@ -93,6 +93,8 @@ func handleRequest(request Request) {
 		handleTextDocumentDidClose(request)
 	case "textDocument/completion":
 		handleTextDocumentCompletion(request)
+	case "textDocument/rename":
+		handleTextDocumentRename(request)
 
 	default:
 		sendError(request.ID, -32601, "Method not found.")

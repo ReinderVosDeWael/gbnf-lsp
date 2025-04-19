@@ -96,7 +96,7 @@ func (lexer *Lexer) next() rune {
 	lexer.pos++
 	if char == '\n' {
 		lexer.line++
-		lexer.column = 1
+		lexer.column = 0
 	} else {
 		lexer.column++
 	}

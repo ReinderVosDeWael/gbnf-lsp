@@ -3,6 +3,7 @@ package lsp
 import (
 	"encoding/json"
 	"fmt"
+	"gbnflsp/gbnf-engine/GBNFParser"
 	"os"
 )
 
@@ -108,11 +109,11 @@ func createDiagnostics(uri string) []Diagnostic {
 			Range: Range{
 				Start: Position{
 					Line:      err.Line,
-					Character: err.Column - 1, // VSCode starts the line _after_ this character.
+					Character: err.Column,
 				},
 				End: Position{
 					Line:      err.Line,
-					Character: err.Column + err.Length - 1,
+					Character: err.Column + err.Length,
 				},
 			},
 			Message:  err.Message,
@@ -193,4 +194,69 @@ func handleTextDocumentCompletion(request Request) {
 
 	data, _ := json.Marshal(response)
 	fmt.Printf("Content-Length: %d\r\n\r\n%s", len(data), data)
+}
+
+type RenameParams struct {
+	TextDocument struct {
+		URI string `json:"uri"`
+	} `json:"textDocument"`
+	Position Position `json:"position"`
+	NewName  string   `json:"newName"`
+}
+
+type TextEdit struct {
+	Range   Range  `json:"range"`
+	NewText string `json:"newText"`
+}
+
+type WorkspaceEdit struct {
+	Changes map[string][]TextEdit `json:"changes"`
+}
+
+func handleTextDocumentRename(request Request) {
+	var params RenameParams
+	if err := json.Unmarshal(request.Params, &params); err != nil {
+		sendError(request.ID, -32600, "Could not unpack request")
+		return
+	}
+
+	file := openFiles[params.TextDocument.URI]
+	token := getTokenAtPosition(file.Tokens, params.Position)
+
+	if token.Type != GBNFParser.TokenIdentifier {
+		sendError(request.ID, -32600, "Can only rename rule identifiers")
+		return
+	}
+
+	var edits []TextEdit
+	for _, t := range file.Tokens {
+		if t.Type == GBNFParser.TokenIdentifier && t.Value == token.Value {
+			edits = append(edits, TextEdit{
+				Range: Range{
+					Start: Position{Line: t.Line, Character: t.Column},
+					End:   Position{Line: t.Line, Character: t.Column + len(t.Value)},
+				},
+				NewText: params.NewName,
+			})
+		}
+	}
+
+	resp := WorkspaceEdit{Changes: map[string][]TextEdit{
+		params.TextDocument.URI: edits,
+	}}
+
+	sendResponse(request.ID, resp)
+}
+
+func getTokenAtPosition(tokens []*GBNFParser.Token, pos Position) *GBNFParser.Token {
+	for _, token := range tokens {
+		startLine := token.Line
+		startChar := token.Column
+		endChar := token.Column + len(token.Value)
+
+		if startLine == pos.Line && pos.Character >= startChar && pos.Character <= endChar {
+			return token
+		}
+	}
+	return nil
 }

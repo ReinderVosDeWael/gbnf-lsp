@@ -10,6 +10,7 @@ func handleInitialize(request Request) {
 				"resolveProvider":   false,
 				"triggerCharacters": []string{"|", "=", " "},
 			},
+			"renameProvider": true,
 		},
 	}
 	sendResponse(request.ID, result)
