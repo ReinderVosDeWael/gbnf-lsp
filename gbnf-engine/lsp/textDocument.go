@@ -260,3 +260,61 @@ func getTokenAtPosition(tokens []*GBNFParser.Token, pos Position) *GBNFParser.To
 	}
 	return nil
 }
+
+type TextDocumentPositionParams struct {
+	TextDocument struct {
+		URI string `json:"uri"`
+	} `json:"textDocument"`
+	Position Position `json:"position"`
+}
+
+type Location struct {
+	URI   string `json:"uri"`
+	Range Range  `json:"range"`
+}
+
+func handleTextDocumentDefinition(request Request) {
+	var params TextDocumentPositionParams
+	err := json.Unmarshal(request.Params, &params)
+	if err != nil {
+		sendError(request.ID, -32600, "Failed to unpack request.")
+		return
+	}
+
+	file := openFiles[params.TextDocument.URI]
+	token := getTokenAtPosition(file.Tokens, params.Position)
+	if token == nil || token.Type != GBNFParser.TokenIdentifier {
+		sendResponse(request.ID, nil)
+		return
+	}
+
+	def := findDefinition(file.AST, token.Value)
+	if def == nil {
+		sendResponse(request.ID, nil)
+		return
+	}
+
+	loc := Location{
+		URI: params.TextDocument.URI,
+		Range: Range{
+			Start: Position{Line: def.Line, Character: def.Column},
+			End:   Position{Line: def.Line, Character: def.Column + len(def.Value)},
+		},
+	}
+
+	sendResponse(request.ID, loc)
+}
+
+func findDefinition(node *GBNFParser.Node, name string) *GBNFParser.Token {
+	if node.Type == GBNFParser.NodeDeclaration &&
+		node.Token.Type == GBNFParser.TokenIdentifier &&
+		node.Token.Value == name {
+		return node.Token
+	}
+	for _, child := range node.Children {
+		if result := findDefinition(child, name); result != nil {
+			return result
+		}
+	}
+	return nil
+}
