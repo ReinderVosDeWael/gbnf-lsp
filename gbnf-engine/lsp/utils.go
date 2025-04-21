@@ -26,7 +26,7 @@ type Response struct {
 
 type OpenFile struct {
 	Text         string
-	Tokens       []*GBNFParser.Token
+	Tokens       []GBNFParser.Token
 	AST          *GBNFParser.Node
 	ParserErrors []*GBNFParser.ParseError
 }
@@ -48,12 +48,9 @@ func (file OpenFile) GetRuleNames() []string {
 
 func recursiveGetRules(node *GBNFParser.Node) []string {
 	rules := []string{}
-	debugLogger.Print(node)
 	if node != nil {
 		if node.Token != nil {
 			if node.Token.Type == GBNFParser.TokenIdentifier {
-				debugLogger.Print("rule")
-				debugLogger.Print(node.Token)
 				rules = append(rules, node.Token.Value)
 			}
 		}
@@ -66,19 +63,9 @@ func recursiveGetRules(node *GBNFParser.Node) []string {
 
 func TextToOpenFile(text string) OpenFile {
 	lexer := GBNFParser.NewLexer(text)
-	debugLogger.Print("Tokenizing...")
-	tokens, err := lexer.LexAllTokens()
-
-	var lexerErrors string
-
-	if err != nil {
-		lexerErrors = "Could not tokenize the entire document, continuing with whatever was lexed"
-		fmt.Fprintf(os.Stderr, lexerErrors)
-	}
-	debugLogger.Print("Parsing...")
+	tokens := lexer.LexAllTokens()
 	parser := GBNFParser.NewParser(tokens)
 	ast, parseErrors := parser.ParseAllRules()
-	debugLogger.Print("Finished parsing.")
 	return OpenFile{
 		Text:         text,
 		Tokens:       tokens,

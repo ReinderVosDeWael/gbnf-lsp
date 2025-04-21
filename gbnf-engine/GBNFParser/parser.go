@@ -68,11 +68,11 @@ type Node struct {
 }
 
 type Parser struct {
-	Tokens []*Token
+	Tokens []Token
 	pos    int
 }
 
-func NewParser(tokens []*Token) Parser {
+func NewParser(tokens []Token) Parser {
 	return Parser{
 		Tokens: tokens,
 		pos:    0,
@@ -103,7 +103,7 @@ func (parser *Parser) ParseAllRules() (*Node, []*ParseError) {
 
 func (parser *Parser) peek() *Token {
 	if parser.pos < len(parser.Tokens) {
-		return parser.Tokens[parser.pos]
+		return &parser.Tokens[parser.pos]
 	}
 	return &Token{Type: TokenEOL}
 }
@@ -118,14 +118,24 @@ func (parser *Parser) next() *Token {
 
 func (parser *Parser) expect(expected TokenType) (*Token, *ParseError) {
 	token := parser.next()
+
+	if token.Error != "" {
+		token := parser.next()
+		return nil, &ParseError{
+			Message: token.Error,
+			Line:    token.Line,
+			Column:  token.Column,
+			Length:  len(token.Value),
+		}
+	}
+
 	if token.Type != expected {
-		err := ParseError{
+		return nil, &ParseError{
 			Message: fmt.Sprintf("expected %v, got %v", expected, token.Type),
 			Line:    token.Line,
 			Column:  token.Column,
 			Length:  len(token.Value),
 		}
-		return nil, &err
 	}
 	return token, nil
 }
@@ -177,6 +187,15 @@ func (parser *Parser) parseExpression() ([]*Node, *ParseError) {
 Loop:
 	for {
 		token := parser.peek()
+		if parser.peek().Error != "" {
+			return nil, &ParseError{
+				Message: token.Error,
+				Line:    token.Line,
+				Column:  token.Column,
+				Length:  len(token.Value),
+			}
+		}
+
 		if token.Type == TokenEOL && !lastTokenAlternative {
 			break
 		}

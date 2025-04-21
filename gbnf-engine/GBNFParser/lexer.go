@@ -1,7 +1,6 @@
 package GBNFParser
 
 import (
-	"fmt"
 	"strings"
 	"unicode"
 )
@@ -26,28 +25,14 @@ type Token struct {
 	Value  string
 	Line   int
 	Column int
+	Error  string
 }
-
-type LexerError struct {
-	Message string
-	Line    int
-	Column  int
-	Length  int
-}
-
-type LexerState int
-
-const (
-	StateDefault LexerState = iota
-	StateWord
-)
 
 type Lexer struct {
 	input  []rune
 	pos    int
 	line   int
 	column int
-	state  LexerState
 }
 
 func NewLexer(input string) *Lexer {
@@ -56,28 +41,25 @@ func NewLexer(input string) *Lexer {
 		pos:    0,
 		line:   0,
 		column: 0,
-		state:  StateDefault,
 	}
 }
 
-func (lexer *Lexer) LexAllTokens() ([]*Token, []*LexerError) {
-	tokens := []*Token{}
-	var errors []*LexerError
+func (lexer *Lexer) LexAllTokens() []Token {
+	tokens := []Token{}
 	previousPos := 0
 	for lexer.pos < len(lexer.input) {
-		newToken, err := lexer.NextToken()
+		newToken := lexer.nextToken()
 		if lexer.pos == previousPos {
-			errors = append(errors, &LexerError{Message: "Lexer entered a loop."})
+			loopToken := Token{
+				Error: "lexer entered a loop",
+				Type:  TokenUnknown,
+			}
+			tokens = append(tokens, loopToken)
 			break
 		}
-		if err != nil {
-			errors = append(errors, err)
-		}
-		if newToken != nil {
-			tokens = append(tokens, newToken)
-		}
+		tokens = append(tokens, newToken)
 	}
-	return tokens, errors
+	return tokens
 }
 
 func (lexer *Lexer) peek() rune {
@@ -112,7 +94,7 @@ func (lexer *Lexer) skipWhitespace() {
 	}
 }
 
-func (lexer *Lexer) NextToken() (*Token, *LexerError) {
+func (lexer *Lexer) nextToken() Token {
 	for lexer.pos < len(lexer.input) {
 		lexer.skipWhitespace()
 
@@ -122,9 +104,9 @@ func (lexer *Lexer) NextToken() (*Token, *LexerError) {
 		switch {
 		case char == 0:
 			lexer.next()
-			return &Token{Type: TokenEOL, Line: startLine, Column: startColumn}, nil
+			return Token{Type: TokenEOL, Line: startLine, Column: startColumn}
 		case char == '#':
-			return lexer.lexComment(), nil
+			return lexer.lexComment()
 		case char == '"':
 			return lexer.lexString()
 		case char == '[':
@@ -135,30 +117,30 @@ func (lexer *Lexer) NextToken() (*Token, *LexerError) {
 			return lexer.lexIdentifier()
 		case char == '|':
 			char = lexer.next()
-			return &Token{Type: TokenAlternative, Value: string(char), Line: startLine, Column: startColumn}, nil
+			return Token{Type: TokenAlternative, Value: string(char), Line: startLine, Column: startColumn}
 		case strings.Contains("()", string(char)):
 			char = lexer.next()
-			return &Token{Type: TokenSubExpression, Value: string(char), Line: startLine, Column: startColumn}, nil
+			return Token{Type: TokenSubExpression, Value: string(char), Line: startLine, Column: startColumn}
 		case char == ':' && lexer.pos+2 < len(lexer.input) && string(lexer.input[lexer.pos:lexer.pos+3]) == "::=":
 			lexer.pos += 3
 			lexer.column += 3
-			return &Token{Type: TokenAssignment, Value: "::=", Line: startLine, Column: startColumn}, nil
+			return Token{Type: TokenAssignment, Value: "::=", Line: startLine, Column: startColumn}
 		case strings.Contains("*?+", string(char)):
 			char = lexer.next()
-			return &Token{Type: TokenOperator, Value: string(char), Line: startLine, Column: startColumn}, nil
+			return Token{Type: TokenOperator, Value: string(char), Line: startLine, Column: startColumn}
 		case char == '\n':
 			lexer.next()
-			return &Token{Type: TokenEOL, Value: "\n", Line: startLine, Column: startColumn}, nil
+			return Token{Type: TokenEOL, Value: "\n", Line: startLine, Column: startColumn}
 		default:
 			return lexer.lexUnknown()
 		}
 
 	}
 
-	return &Token{Type: TokenEOL, Line: lexer.line, Column: lexer.column}, nil
+	return Token{Type: TokenEOL, Line: lexer.line, Column: lexer.column}
 }
 
-func (lexer *Lexer) lexString() (*Token, *LexerError) {
+func (lexer *Lexer) lexString() Token {
 	startLine, startColumn := lexer.line, lexer.column
 
 	var value []rune
@@ -169,14 +151,14 @@ func (lexer *Lexer) lexString() (*Token, *LexerError) {
 			break
 		}
 		if char == 0 || char == '\n' {
-			return nil, &LexerError{Message: fmt.Sprintf(`unterminated string`), Line: lexer.line, Column: lexer.column, Length: 1}
+			return Token{Type: TokenString, Value: string(value), Error: "unterminated string", Line: startLine, Column: startColumn}
 		}
 		value = append(value, char)
 	}
-	return &Token{Type: TokenString, Value: string(value), Line: startLine, Column: startColumn}, nil
+	return Token{Type: TokenString, Value: string(value), Line: startLine, Column: startColumn}
 }
 
-func (lexer *Lexer) lexRegex() (*Token, *LexerError) {
+func (lexer *Lexer) lexRegex() Token {
 	startLine, startColumn := lexer.line, lexer.column
 	var value []rune
 	bracketCount := 0
@@ -193,14 +175,14 @@ func (lexer *Lexer) lexRegex() (*Token, *LexerError) {
 			}
 		}
 		if char == 0 || char == '\n' {
-			return nil, &LexerError{Message: fmt.Sprintf(`unterminated regex`), Line: lexer.line, Column: lexer.column, Length: 1}
+			return Token{Type: TokenRegexp, Value: string(value), Line: startLine, Column: startColumn, Error: "unterminated regex"}
 		}
 		value = append(value, char)
 	}
-	return &Token{Type: TokenRegexp, Value: string(value), Line: startLine, Column: startColumn}, nil
+	return Token{Type: TokenRegexp, Value: string(value), Line: startLine, Column: startColumn}
 }
 
-func (lexer *Lexer) lexRange() (*Token, *LexerError) {
+func (lexer *Lexer) lexRange() Token {
 	startLine, startColumn := lexer.line, lexer.column
 	var value []rune
 
@@ -209,31 +191,31 @@ func (lexer *Lexer) lexRange() (*Token, *LexerError) {
 		char = lexer.next()
 
 		if char == 0 || char == '\n' {
-			return nil, &LexerError{Message: fmt.Sprintf(`unterminated {} operator`), Line: lexer.line, Column: lexer.column, Length: 1}
+			return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "unterminated {} operator"}
 		}
 		value = append(value, char)
 	}
 
 	parts := strings.Split(string(value[1:len(value)-1]), ",")
 	if len(parts) > 2 {
-		return nil, &LexerError{Message: fmt.Sprintf(`unknown contents of {} operator`), Line: lexer.line, Column: lexer.column, Length: 1}
+		return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "unknown contents of {} operator"}
 	}
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
-			return nil, &LexerError{Message: fmt.Sprintf(`empty numeric value in {}`), Line: lexer.line, Column: lexer.column, Length: 1}
+			return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "empty numeric value in {}"}
 		}
 		for _, char := range part {
 			if !unicode.IsDigit(char) {
-				return nil, &LexerError{Message: fmt.Sprintf(`contents of {} must be numeric`), Line: lexer.line, Column: lexer.column, Length: 1}
+				return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "contents of {} must be numeric"}
 			}
 		}
 	}
 
-	return &Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn}, nil
+	return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn}
 }
 
-func (lexer *Lexer) lexIdentifier() (*Token, *LexerError) {
+func (lexer *Lexer) lexIdentifier() Token {
 	startLine, startColumn := lexer.line, lexer.column
 	breakCharacters := "\n{*+?)"
 	var value []rune
@@ -245,21 +227,21 @@ func (lexer *Lexer) lexIdentifier() (*Token, *LexerError) {
 			break
 		} else {
 			lexer.next()
-			return nil, &LexerError{Message: fmt.Sprintf(`unknown variable name`), Line: lexer.line, Column: lexer.column, Length: 1}
+			return Token{Type: TokenIdentifier, Value: string(value), Line: startLine, Column: startColumn, Error: "unknown variable name"}
 		}
 	}
-	return &Token{Type: TokenIdentifier, Value: string(value), Line: startLine, Column: startColumn}, nil
+	return Token{Type: TokenIdentifier, Value: string(value), Line: startLine, Column: startColumn}
 }
 
-func (lexer *Lexer) lexComment() *Token {
+func (lexer *Lexer) lexComment() Token {
 	char := lexer.next()
 	for char != '\n' && char != 0 {
 		char = lexer.next()
 	}
-	return &Token{Type: TokenEOL, Line: lexer.line, Column: lexer.column}
+	return Token{Type: TokenEOL, Line: lexer.line, Column: lexer.column}
 }
 
-func (lexer *Lexer) lexUnknown() (*Token, *LexerError) {
+func (lexer *Lexer) lexUnknown() Token {
 
 	startLine, startColumn := lexer.line, lexer.column
 	word := ""
@@ -267,15 +249,11 @@ func (lexer *Lexer) lexUnknown() (*Token, *LexerError) {
 		char := lexer.next()
 		word = word + string(char)
 	}
-	return &Token{
-			Type:   TokenUnknown,
-			Value:  word,
-			Line:   startLine,
-			Column: startColumn,
-		}, &LexerError{
-			Message: "unknown token",
-			Line:    startLine,
-			Column:  startColumn,
-			Length:  len(word),
-		}
+	return Token{
+		Type:   TokenUnknown,
+		Value:  word,
+		Line:   startLine,
+		Column: startColumn,
+		Error:  "unknown token",
+	}
 }

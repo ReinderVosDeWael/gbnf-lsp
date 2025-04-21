@@ -26,7 +26,7 @@ func TestGetRuleNamesNilAST(t *testing.T) {
 
 func TestGetRuleNamesSingleAssignment(t *testing.T) {
 	node := &GBNFParser.Node{
-		Token: makeToken("rule1", GBNFParser.TokenAssignment),
+		Token: makeToken("rule1", GBNFParser.TokenIdentifier),
 	}
 	file := lsp.OpenFile{AST: node}
 	rules := file.GetRuleNames()
@@ -37,13 +37,13 @@ func TestGetRuleNamesSingleAssignment(t *testing.T) {
 
 func TestGetRuleNamesNestedAssignments(t *testing.T) {
 	child1 := &GBNFParser.Node{
-		Token: makeToken("rule2", GBNFParser.TokenAssignment),
+		Token: makeToken("rule2", GBNFParser.TokenIdentifier),
 	}
 	child2 := &GBNFParser.Node{
-		Token: makeToken("rule3", GBNFParser.TokenAssignment),
+		Token: makeToken("rule3", GBNFParser.TokenIdentifier),
 	}
 	root := &GBNFParser.Node{
-		Token:    makeToken("rule1", GBNFParser.TokenAssignment),
+		Token:    makeToken("rule1", GBNFParser.TokenIdentifier),
 		Children: []*GBNFParser.Node{child1, child2},
 	}
 	file := lsp.OpenFile{AST: root}

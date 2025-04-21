@@ -248,14 +248,14 @@ func handleTextDocumentRename(request Request) {
 	sendResponse(request.ID, resp)
 }
 
-func getTokenAtPosition(tokens []*GBNFParser.Token, pos Position) *GBNFParser.Token {
+func getTokenAtPosition(tokens []GBNFParser.Token, pos Position) *GBNFParser.Token {
 	for _, token := range tokens {
 		startLine := token.Line
 		startChar := token.Column
 		endChar := token.Column + len(token.Value)
 
 		if startLine == pos.Line && pos.Character >= startChar && pos.Character <= endChar {
-			return token
+			return &token
 		}
 	}
 	return nil

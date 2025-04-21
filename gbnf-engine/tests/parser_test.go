@@ -6,7 +6,7 @@ import (
 )
 
 func TestParserSimpleRule(t *testing.T) {
-	tokens, _ := CollectTokens(`name ::= "value"`)
+	tokens := CollectTokens(`name ::= "value"`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
 
@@ -24,7 +24,7 @@ func TestParserSimpleRule(t *testing.T) {
 }
 
 func TestParserOperatorRule(t *testing.T) {
-	tokens, _ := CollectTokens(`digits ::= [0-9]+`)
+	tokens := CollectTokens(`digits ::= [0-9]+`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
 
@@ -38,7 +38,7 @@ func TestParserOperatorRule(t *testing.T) {
 }
 
 func TestParserAlternativeRule(t *testing.T) {
-	tokens, _ := CollectTokens(`rule ::= "yes" | "no"`)
+	tokens := CollectTokens(`rule ::= "yes" | "no"`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
 
@@ -60,7 +60,7 @@ func TestParserAlternativeRule(t *testing.T) {
 }
 
 func TestParserAlternativeRuleMultiline(t *testing.T) {
-	tokens, _ := CollectTokens(`rule ::= "yes" | 
+	tokens := CollectTokens(`rule ::= "yes" | 
 										 "no"`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
@@ -83,7 +83,7 @@ func TestParserAlternativeRuleMultiline(t *testing.T) {
 }
 
 func TestParserNestedExpressions(t *testing.T) {
-	tokens, _ := CollectTokens(`rule ::= ("a" | "b")*`)
+	tokens := CollectTokens(`rule ::= ("a" | "b")*`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
 
@@ -97,7 +97,7 @@ func TestParserNestedExpressions(t *testing.T) {
 }
 
 func TestParserInvalidAlternativePosition(t *testing.T) {
-	tokens, _ := CollectTokens(`rule ::= | "a"`)
+	tokens := CollectTokens(`rule ::= | "a"`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	_, err := parser.ParseRule()
 
@@ -107,7 +107,7 @@ func TestParserInvalidAlternativePosition(t *testing.T) {
 }
 
 func TestParserUnexpectedAssignment(t *testing.T) {
-	tokens, _ := CollectTokens(`rule ::= "a" ::= "b"`)
+	tokens := CollectTokens(`rule ::= "a" ::= "b"`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	_, err := parser.ParseRule()
 
@@ -117,7 +117,7 @@ func TestParserUnexpectedAssignment(t *testing.T) {
 }
 
 func TestParserRepeatToken(t *testing.T) {
-	tokens, _ := CollectTokens(`letters ::= [a-z]{2,4}`)
+	tokens := CollectTokens(`letters ::= [a-z]{2,4}`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
 
@@ -133,7 +133,7 @@ func TestParserRepeatToken(t *testing.T) {
 
 func TestParserMultipleTokensSequence(t *testing.T) {
 	input := `rule ::= "a" [0-9]? identifier+`
-	tokens, _ := CollectTokens(input)
+	tokens := CollectTokens(input)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	node, err := parser.ParseRule()
 
