@@ -1,9 +1,9 @@
 {
   "name": "gbnf-engine",
   "publisher": "ReinderVosdeWael",
-  "displayName": "GBNF LSP",
+  "displayName": "GBNF LSP (Alpha Version)",
   "description": "An LSP for GBNF",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -44,12 +44,13 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "build:go:windows": "cross-env GOOS=windows GOARCH=amd64 go build -o ./bin/windows/gbnf-engine.exe ./gbnf-engine/main.go",
-    "build:go:linux": "cross-env GOOS=linux GOARCH=amd64 go build -o ./bin/linux/gbnf-engine ./gbnf-engine/main.go",
-    "build:go:darwin": "cross-env GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin/gbnf-engine ./gbnf-engine/main.go",
-    "build:go:darwin-arm64": "cross-env GOOS=darwin GOARCH=arm64 go build -o ./bin/darwin-arm64/gbnf-engine ./gbnf-engine/main.go",
+    "build:go:windows": "cross-env GOOS=windows GOARCH=amd64 go build -o ./bin/windows/gbnf-engine.exe ./gbnf-engine/main.go && chmod 777 ./bin/windows/gbnf-engine.exe",
+    "build:go:linux": "cross-env GOOS=linux GOARCH=amd64 go build -o ./bin/linux/gbnf-engine ./gbnf-engine/main.go && chmod 777 ./bin/linux/gbnf-engine",
+    "build:go:darwin": "cross-env GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin/gbnf-engine ./gbnf-engine/main.go && chmod 777 ./bin/darwin/gbnf-engine",
+    "build:go:darwin-arm64": "cross-env GOOS=darwin GOARCH=arm64 go build -o ./bin/darwin-arm64/gbnf-engine ./gbnf-engine/main.go && chmod 777 ./bin/darwin-arm64/gbnf-engine",
     "build:go": "npm-run-all build:go:*",
-    "build": "npm run compile && npm run build:go"
+    "build": "npm run compile && npm run build:go",
+    "publish": "npm run build && vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -65,6 +66,7 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@vscode/vsce": "^3.3.2",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-protocol": "^3.17.5"
   }

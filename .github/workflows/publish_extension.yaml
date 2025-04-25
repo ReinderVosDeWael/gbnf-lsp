@@ -1,29 +1,37 @@
-name: Publish VS Code Extension
+name: Build and Package VSIX
 
 on:
   push:
-    tags:
-      - 'v*'  
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.24'
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
-      - name: Test Go
-        run: go test ./gbnf-engine/tests
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 21
-      - run: npm ci && npm run build
-      - name: Publish to Open VSX Registry
-        uses: HaaLeo/publish-vscode-extension@v2
-        with:
-          pat: ${{ secrets.OPEN_VSX_TOKEN }}
+    - name: Install NPM dependencies
+      run: npm ci
+
+    - name: Build the extension
+      run: npm run publish
+
+    - name: Upload VSIX as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: gbnf-engine-vsix
+        path: |
+          *.vsix

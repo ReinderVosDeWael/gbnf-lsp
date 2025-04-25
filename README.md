@@ -1,12 +1,15 @@
-# GBNF LSP (Alpha)
+# GBNF Language Server
 
-A Language Server Protocol for the GBNF grammar structure implemented by Llama.cpp.
+An open-source Language Server Protocol (LSP) implementation for GBNF.
 
 ## Features
 
 - Syntax Highlighting
-- More to follow!
+- Diagnostics
+- Autocompletion
+- Go to Definition
+- Rename Symbol
 
 ## Known Issues
 
-This is an alpha version and not ready for wide-spread adoption.
+This is an Alpha version. If you run into any issues, please report them on [github](https://github.com/ReinderVosDeWael/gbnf-lsp/).
