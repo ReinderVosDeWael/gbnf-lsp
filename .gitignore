@@ -5,3 +5,5 @@ out
 node_modules
 *.vsix
 *.exe
+dist
+extension
