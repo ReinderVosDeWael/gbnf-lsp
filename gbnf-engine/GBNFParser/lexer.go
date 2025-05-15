@@ -200,10 +200,12 @@ func (lexer *Lexer) lexRange() Token {
 	if len(parts) > 2 {
 		return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "unknown contents of {} operator"}
 	}
-	for _, part := range parts {
+	for index, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
-			return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "empty numeric value in {}"}
+			if index == 0 {
+				return Token{Type: TokenRepeat, Value: string(value), Line: startLine, Column: startColumn, Error: "empty numeric value in {}"}
+			}
 		}
 		for _, char := range part {
 			if !unicode.IsDigit(char) {

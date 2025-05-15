@@ -60,17 +60,18 @@ func TestRangeToken(t *testing.T) {
 	}
 }
 
+func TestRangeTokenMissingSecond(t *testing.T) {
+	tokens := CollectTokens(`"abc"{1,}`)
+
+	if tokens[1].Type != GBNFParser.TokenRepeat || tokens[1].Value != "{1,}" {
+		t.Errorf("Expected TokenOperator '{1,2}', got %+v", tokens[1])
+	}
+}
+
 func TestInvalidRangeNonNumeric(t *testing.T) {
 	token := CollectTokens(`"abc"{a,b}`)
 	if !strings.Contains(token[1].Error, "must be numeric") {
 		t.Errorf("Expected numeric range error, got %v", token[0].Error)
-	}
-}
-
-func TestEmptyRangeValue(t *testing.T) {
-	token := CollectTokens(`"abc"{1,}`)
-	if !strings.Contains(token[1].Error, "empty numeric value") {
-		t.Errorf("Expected empty numeric value error, got %v", token[0].Error)
 	}
 }
 

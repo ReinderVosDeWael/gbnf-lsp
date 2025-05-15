@@ -131,6 +131,21 @@ func TestParserRepeatToken(t *testing.T) {
 	}
 }
 
+func TestParserRepeatTokenMinOnly(t *testing.T) {
+	tokens := CollectTokens(`letters ::= [a-z]{2,}`)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	child := node.Children[0]
+	if child.Min != 2 || child.Max != -1 {
+		t.Errorf("Expected repeat {2,4}, got Min:%d Max:%d", child.Min, child.Max)
+	}
+}
+
 func TestParserMultipleTokensSequence(t *testing.T) {
 	input := `rule ::= "a" [0-9]? identifier+`
 	tokens := CollectTokens(input)

@@ -376,9 +376,14 @@ func (parser *Parser) parseRepeat(previousNode *Node, token *Token) (*Node, *Par
 			return nil, NewParseError("could not parse min %q", token, minStr)
 		}
 
-		max, err = strconv.Atoi(maxStr)
-		if err != nil {
-			return nil, NewParseError("could not parse max %q", token, maxStr)
+		if len(maxStr) == 0 {
+			max = -1
+		} else {
+			max, err = strconv.Atoi(maxStr)
+
+			if err != nil {
+				return nil, NewParseError("could not parse max %q", token, maxStr)
+			}
 		}
 	} else {
 		return nil, NewParseError("expected 1 or 2 repeat parts, got %d", token, len(parts))
