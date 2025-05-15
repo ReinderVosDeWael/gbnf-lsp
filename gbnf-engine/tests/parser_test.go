@@ -189,3 +189,14 @@ func TestParserEscapedQuotes(t *testing.T) {
 		}
 	}
 }
+
+func TestErrorOnEmptyRule(t *testing.T) {
+	input := `rule ::= `
+	tokens := CollectTokens(input)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	_, err := parser.ParseRule()
+
+	if err == nil {
+		t.Fatalf("Expected an error.")
+	}
+}

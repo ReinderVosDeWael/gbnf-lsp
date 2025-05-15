@@ -197,6 +197,9 @@ Loop:
 		}
 
 		if token.Type == TokenEOL && !lastTokenAlternative {
+			if len(nodes) == 0 {
+				return nil, NewParseError("empty expression", token)
+			}
 			break
 		}
 		if token.Type == TokenEOL {
@@ -277,6 +280,7 @@ Loop:
 	if err != nil {
 		return nil, err
 	}
+
 	return nodes, nil
 }
 
