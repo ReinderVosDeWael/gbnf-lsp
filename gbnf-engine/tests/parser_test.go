@@ -167,3 +167,25 @@ func TestParserMultipleTokensSequence(t *testing.T) {
 		}
 	}
 }
+
+func TestParserEscapedQuotes(t *testing.T) {
+	input := `rule ::= "\"quote\""`
+	tokens := CollectTokens(input)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	expectedTypes := []GBNFParser.TokenType{GBNFParser.TokenString}
+	if len(node.Children) != len(expectedTypes) {
+		t.Fatalf("Expected %d children, got %d", len(expectedTypes), len(node.Children))
+	}
+
+	for i, child := range node.Children {
+		if child.Token.Type != expectedTypes[i] {
+			t.Errorf("Expected token type %v at position %d, got %v", expectedTypes[i], i, child.Token.Type)
+		}
+	}
+}

@@ -15,7 +15,7 @@
             "name": "variable.parameter.gbnf"
         },
         {
-            "match": "\"[^\"]*\"",
+            "match": "\"(?:\\\\\"|[^\"])*\"",
             "name": "string.quoted.double.gbnf"
         },
         {

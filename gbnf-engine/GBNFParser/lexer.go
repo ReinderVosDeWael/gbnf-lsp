@@ -147,12 +147,24 @@ func (lexer *Lexer) lexString() Token {
 	lexer.next()
 	for {
 		char := lexer.next()
-		if char == '"' {
-			break
-		}
 		if char == 0 || char == '\n' {
 			return Token{Type: TokenString, Value: string(value), Error: "unterminated string", Line: startLine, Column: startColumn}
 		}
+
+		if char == '\\' {
+			nextChar := lexer.peek()
+			switch nextChar {
+			case '"', '\\':
+				lexer.next()
+				value = append(value, nextChar)
+				continue
+			}
+		}
+
+		if char == '"' {
+			break
+		}
+
 		value = append(value, char)
 	}
 	return Token{Type: TokenString, Value: string(value), Line: startLine, Column: startColumn}
