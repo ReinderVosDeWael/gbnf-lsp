@@ -2,10 +2,8 @@ name: Build and Package VSIX
 
 on:
   push:
-    branches: [ main ]
     tags:
       - v*
-  workflow_dispatch:
 
 jobs:
   build:
@@ -31,15 +29,11 @@ jobs:
     - name: Build the extension
       run: npm run publish
 
-    - name: Upload VSIX as artifact
-      uses: actions/upload-artifact@v4
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref_type == 'tag'
       with:
-        name: gbnf-engine-vsix
-        path: |
-          *.vsix
-    
-    - name: Upload binaries as artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        path: |
+        files: |
           ./bin/**/*
+          LICENSE
+          ./*.vsix
