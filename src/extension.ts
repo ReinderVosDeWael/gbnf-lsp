@@ -12,8 +12,6 @@ let client: LanguageClient;
 let outputChannel: vscode.OutputChannel;
 
 function getPlatformBinary(context: vscode.ExtensionContext): string {
-  let binName = "gbnf-engine";
-
   const supportedPlatforms = ["win32", "linux", "darwin"];
   if (supportedPlatforms.find((plat) => plat === os.platform()) === undefined) {
     throw new Error(`Unsupported platform: ${os.platform()}`);
@@ -24,16 +22,12 @@ function getPlatformBinary(context: vscode.ExtensionContext): string {
     throw new Error(`Unsupported platform: ${os.arch()}`);
   }
 
+  let binName = os.platform() + "-" + os.arch() + "-" + "gbnf-engine";
   if (os.platform() === "win32") {
     binName += ".exe";
   }
 
-  return path.join(
-    context.extensionPath,
-    "bin",
-    os.platform() + "-" + os.arch(),
-    binName
-  );
+  return path.join(context.extensionPath, "bin", binName);
 }
 
 export function activate(context: vscode.ExtensionContext) {

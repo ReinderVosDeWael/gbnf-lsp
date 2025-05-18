@@ -37,6 +37,6 @@ jobs:
       if: github.ref_type == 'tag'
       with:
         files: |
-          ./bin/**/*
+          ./bin/*
           LICENSE
           ./*.vsix
