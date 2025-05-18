@@ -3,6 +3,8 @@ name: Build and Package VSIX
 on:
   push:
     branches: [ main ]
+    tags:
+      - v*
   workflow_dispatch:
 
 jobs:
@@ -35,3 +37,9 @@ jobs:
         name: gbnf-engine-vsix
         path: |
           *.vsix
+    
+    - name: Upload binaries as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          ./bin/**/*

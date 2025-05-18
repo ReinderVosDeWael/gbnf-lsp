@@ -3,7 +3,7 @@
   "publisher": "ReinderVosdeWael",
   "displayName": "GBNF LSP (Alpha Version)",
   "description": "An LSP for GBNF",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -14,7 +14,9 @@
   "files": [
     "bin/**",
     "out/**",
-    "syntaxes/**"
+    "syntaxes/**",
+    "LICENSE",
+    "README.md"
   ],
   "categories": [
     "Other"
@@ -47,9 +49,11 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "build:go:windows": "cross-env GOOS=windows GOARCH=amd64 go build -o ./bin/windows/gbnf-engine.exe ./gbnf-engine/main.go && chmod 755 ./bin/windows/gbnf-engine.exe",
-    "build:go:linux": "cross-env GOOS=linux GOARCH=amd64 go build -o ./bin/linux/gbnf-engine ./gbnf-engine/main.go && chmod 755 ./bin/linux/gbnf-engine",
-    "build:go:darwin": "cross-env GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin/gbnf-engine ./gbnf-engine/main.go && chmod 755 ./bin/darwin/gbnf-engine",
+    "build:go:windows-x64": "cross-env GOOS=windows GOARCH=amd64 go build -o ./bin/win32-x64/gbnf-engine.exe ./gbnf-engine/main.go && chmod 755 ./bin/win32-x64/gbnf-engine.exe",
+    "build:go:windows-arm64": "cross-env GOOS=windows GOARCH=arm64 go build -o ./bin/win32-arm64/gbnf-engine.exe ./gbnf-engine/main.go && chmod 755 ./bin/win32-arm64/gbnf-engine.exe",
+    "build:go:linux-x64": "cross-env GOOS=linux GOARCH=amd64 go build -o ./bin/linux-x64/gbnf-engine ./gbnf-engine/main.go && chmod 755 ./bin/linux-x64/gbnf-engine",
+    "build:go:linux-arm64": "cross-env GOOS=linux GOARCH=arm64 go build -o ./bin/linux-arm64/gbnf-engine ./gbnf-engine/main.go && chmod 755 ./bin/linux-arm64/gbnf-engine",
+    "build:go:darwin-x64": "cross-env GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin-x64/gbnf-engine ./gbnf-engine/main.go && chmod 755 ./bin/darwin-x64/gbnf-engine",
     "build:go:darwin-arm64": "cross-env GOOS=darwin GOARCH=arm64 go build -o ./bin/darwin-arm64/gbnf-engine ./gbnf-engine/main.go && chmod 755 ./bin/darwin-arm64/gbnf-engine",
     "build:go": "npm-run-all build:go:*",
     "build": "npm run compile && npm run build:go",
