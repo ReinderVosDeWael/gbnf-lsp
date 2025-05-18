@@ -87,58 +87,6 @@ type Range struct {
 	End   Position `json:"end"`
 }
 
-type Diagnostic struct {
-	Range    Range  `json:"range"`
-	Message  string `json:"message"`
-	Severity int    `json:"severity"` // 1 = Error, 2 = Warning
-	Source   string `json:"source,omitempty"`
-}
-
-type PublishDiagnosticsParams struct {
-	URI         string       `json:"uri"`
-	Diagnostics []Diagnostic `json:"diagnostics"`
-}
-
-func createDiagnostics(uri string) []Diagnostic {
-	file := openFiles[uri]
-	errors := file.ParserErrors
-	diags := []Diagnostic{}
-	for _, err := range errors {
-		debugLogger.Printf("Found error: %v", err)
-		diags = append(diags, Diagnostic{
-			Range: Range{
-				Start: Position{
-					Line:      err.Line,
-					Character: err.Column,
-				},
-				End: Position{
-					Line:      err.Line,
-					Character: err.Column + err.Length,
-				},
-			},
-			Message:  err.Message,
-			Severity: 1,
-			Source:   "gnbf-lsp",
-		})
-	}
-	return diags
-}
-
-func sendDiagnostics(uri string) {
-	diags := createDiagnostics(uri)
-	msg := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "textDocument/publishDiagnostics",
-		"params": PublishDiagnosticsParams{
-			URI:         uri,
-			Diagnostics: diags,
-		},
-	}
-
-	data, _ := json.Marshal(msg)
-	fmt.Printf("Content-Length: %d\r\n\r\n%s", len(data), data)
-}
-
 type CompletionParams struct {
 	TextDocument struct {
 		URI string `json:"uri"`
