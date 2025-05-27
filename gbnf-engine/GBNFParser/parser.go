@@ -159,8 +159,13 @@ func (parser *Parser) ParseRule() (*Node, *ParseError) {
 		return nil, err
 	}
 
+	for parser.peek().Type == TokenEOL && parser.pos != len(parser.Tokens) {
+		// New lines after ::= are accepted.
+		parser.next()
+	}
+
 	root := Node{Token: nameToken, Type: NodeDeclaration}
-	children, err := parser.parseExpression()
+	children, err := parser.parseExpression(false)
 	root.Children = children
 	if err != nil {
 		parser.forwardTillNextLine()
@@ -180,12 +185,11 @@ func (parser *Parser) forwardTillNextLine() {
 
 }
 
-func (parser *Parser) parseExpression() ([]*Node, *ParseError) {
+func (parser *Parser) parseExpression(continueOnEol bool) ([]*Node, *ParseError) {
 	nodes := []*Node{}
-	lastTokenAlternative := false
 
 Loop:
-	for {
+	for parser.pos < len(parser.Tokens) {
 		token := parser.peek()
 		if parser.peek().Error != "" {
 			return nil, &ParseError{
@@ -196,18 +200,15 @@ Loop:
 			}
 		}
 
-		if token.Type == TokenEOL && !lastTokenAlternative {
-			if len(nodes) == 0 {
-				return nil, NewParseError("empty expression", token)
+		if !continueOnEol && token.Type == TokenEOL {
+			if len(nodes) == 0 || nodes[len(nodes)-1].Type != NodeAlternative {
+				break
 			}
-			break
-		}
-		if token.Type == TokenEOL {
+		} else if token.Type == TokenEOL {
 			parser.next()
 			continue
 		}
 
-		lastTokenAlternative = false
 		token = parser.next()
 		switch token.Type {
 
@@ -230,7 +231,6 @@ Loop:
 
 		case TokenAlternative:
 			// Alternatives are done after parsing the entire expression.
-			lastTokenAlternative = true
 			nodes = append(nodes, &Node{Type: NodeAlternative, Min: 1, Max: 1, Token: token})
 		case TokenString, TokenRegexp, TokenIdentifier:
 			nodes = append(nodes, &Node{Token: token, Min: 1, Max: 1, Type: NodeToken})
@@ -263,7 +263,7 @@ Loop:
 
 		case TokenSubExpression:
 			if token.Value == `(` {
-				children, err := parser.parseExpression()
+				children, err := parser.parseExpression(true)
 				if err != nil {
 					return nil, err
 				}
@@ -274,6 +274,10 @@ Loop:
 				break Loop
 			}
 		}
+	}
+
+	if len(nodes) == 0 {
+		return nil, NewParseError("empty expression", parser.peek())
 	}
 
 	nodes, err := parser.parseAlternatives(nodes)
@@ -292,11 +296,18 @@ func (parser *Parser) parseAlternatives(nodes []*Node) ([]*Node, *ParseError) {
 			newNodes = append(newNodes, node)
 			continue
 		}
-		if index == 0 || index == len(nodes)-1 {
-			return []*Node{}, NewParseError("alternative found at start or end of expression", node.Token)
+
+		if index == len(nodes)-1 {
+			return []*Node{}, NewParseError("alternative found at end of expression", node.Token)
 		}
 
-		previousNode := newNodes[len(newNodes)-1]
+		var previousNode *Node
+		if index == 0 {
+			// | at the start of an expression is legal.
+			previousNode = &Node{Type: NodeUnknown}
+		} else {
+			previousNode = newNodes[len(newNodes)-1]
+		}
 		nextNode := nodes[index+1]
 
 		if nextNode.Type == NodeAlternative {
@@ -306,7 +317,11 @@ func (parser *Parser) parseAlternatives(nodes []*Node) ([]*Node, *ParseError) {
 			previousNode.Children = append(previousNode.Children, nextNode)
 		} else {
 			node.Children = []*Node{previousNode, nextNode}
-			newNodes[len(newNodes)-1] = node
+			if len(newNodes) == 0 {
+				newNodes = append(newNodes, node)
+			} else {
+				newNodes[len(newNodes)-1] = node
+			}
 		}
 		index++
 	}

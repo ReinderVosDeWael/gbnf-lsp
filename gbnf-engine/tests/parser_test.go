@@ -23,6 +23,50 @@ func TestParserSimpleRule(t *testing.T) {
 	}
 }
 
+func TestParserImmediateNewLine(t *testing.T) {
+	tokens := CollectTokens(`name ::= 
+								"value"`)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if node.Token.Value != "name" || node.Type != GBNFParser.NodeDeclaration {
+		t.Errorf("Expected NodeRoot with name 'name', got %+v", node)
+	}
+
+	if len(node.Children) != 1 || node.Children[0].Token.Value != "value" {
+		t.Errorf("Expected child node with value 'value', got %+v", node.Children)
+	}
+}
+
+func TestParserMultilineSubexpression(t *testing.T) {
+	tokens := CollectTokens(`name ::= (
+								"value"
+								"yields value"
+							)`)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if node.Token.Value != "name" || node.Type != GBNFParser.NodeDeclaration {
+		t.Errorf("Expected NodeRoot with name 'name', got %+v", node)
+	}
+
+	if node.Children[0].Type != GBNFParser.NodeSubExpression {
+		t.Errorf("Expected a subexpression token, got %+v", node.Children[0].Token.Type)
+	}
+
+	if len(node.Children) != 1 || node.Children[0].Children[0].Token.Value != "value" {
+		t.Errorf("Expected grandchild node with value 'value', got %+v", node.Children)
+	}
+}
+
 func TestParserEndWithBrackets(t *testing.T) {
 	tokens := CollectTokens(`name ::= ("value")
 							 root ::= "stay"`)
@@ -116,12 +160,26 @@ func TestParserNestedExpressions(t *testing.T) {
 }
 
 func TestParserInvalidAlternativePosition(t *testing.T) {
-	tokens := CollectTokens(`rule ::= | "a"`)
+	tokens := CollectTokens(`rule ::= "a" |`)
 	parser := GBNFParser.Parser{Tokens: tokens}
 	_, err := parser.ParseRule()
 
-	if err == nil || err.Message != "alternative found at start or end of expression" {
+	if err == nil || err.Message != "alternative found at end of expression" {
 		t.Errorf("Expected alternative position error, got %v", err)
+	}
+}
+
+func TestParserAlternativeStartPosition(t *testing.T) {
+	tokens := CollectTokens(`rule ::= | "a"`)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(node.Children) != 1 || len(node.Children[0].Children) != 2 {
+		t.Errorf("Expected repeat node with '*', got %+v", node.Children[0])
 	}
 }
 

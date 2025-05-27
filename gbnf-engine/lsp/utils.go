@@ -33,19 +33,18 @@ type OpenFile struct {
 
 func (file OpenFile) GetRuleNames() []string {
 	rules := recursiveGetRules(file.AST)
-	uniqueRulesMap := make(map[string]bool)
-	for _, rule := range rules {
-		uniqueRulesMap[rule] = true
-	}
-
+	seen := make(map[string]bool)
 	uniqueRules := []string{}
-	for key := range uniqueRulesMap {
-		uniqueRules = append(uniqueRules, key)
+
+	for _, rule := range rules {
+		if !seen[rule] {
+			seen[rule] = true
+			uniqueRules = append(uniqueRules, rule)
+		}
 	}
+
 	return uniqueRules
-
 }
-
 func recursiveGetRules(node *GBNFParser.Node) []string {
 	rules := []string{}
 	if node != nil {
