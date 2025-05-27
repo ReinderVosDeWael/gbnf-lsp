@@ -23,6 +23,25 @@ func TestParserSimpleRule(t *testing.T) {
 	}
 }
 
+func TestParserEndWithBrackets(t *testing.T) {
+	tokens := CollectTokens(`name ::= ("value")
+							 root ::= "stay"`)
+	parser := GBNFParser.Parser{Tokens: tokens}
+	node, err := parser.ParseRule()
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if node.Token.Value != "name" || node.Type != GBNFParser.NodeDeclaration {
+		t.Errorf("Expected NodeRoot with name 'name', got %+v", node)
+	}
+
+	if len(node.Children) != 1 || node.Children[0].Children[0].Token.Value != "value" {
+		t.Errorf("Expected grandchild node with value 'value', got %+v", node.Children)
+	}
+}
+
 func TestParserOperatorRule(t *testing.T) {
 	tokens := CollectTokens(`digits ::= [0-9]+`)
 	parser := GBNFParser.Parser{Tokens: tokens}

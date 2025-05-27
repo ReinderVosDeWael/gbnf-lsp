@@ -262,7 +262,7 @@ Loop:
 			nodes[len(nodes)-1] = repeatNode
 
 		case TokenSubExpression:
-			if token.Value == "(" {
+			if token.Value == `(` {
 				children, err := parser.parseExpression()
 				if err != nil {
 					return nil, err
@@ -292,7 +292,6 @@ func (parser *Parser) parseAlternatives(nodes []*Node) ([]*Node, *ParseError) {
 			newNodes = append(newNodes, node)
 			continue
 		}
-		// Guard: at start or end
 		if index == 0 || index == len(nodes)-1 {
 			return []*Node{}, NewParseError("alternative found at start or end of expression", node.Token)
 		}
@@ -300,7 +299,6 @@ func (parser *Parser) parseAlternatives(nodes []*Node) ([]*Node, *ParseError) {
 		previousNode := newNodes[len(newNodes)-1]
 		nextNode := nodes[index+1]
 
-		// Guard: two alternatives in a row
 		if nextNode.Type == NodeAlternative {
 			return []*Node{}, NewParseError("cannot have two alternatives in succession", node.Token)
 		}
@@ -313,10 +311,6 @@ func (parser *Parser) parseAlternatives(nodes []*Node) ([]*Node, *ParseError) {
 		index++
 	}
 
-	// Ensure end-of-line alternative is handled correctly.
-	if parser.peek().Type == TokenEOL {
-		parser.next()
-	}
 	return newNodes, nil
 }
 
