@@ -235,7 +235,7 @@ func (lexer *Lexer) lexIdentifier() Token {
 	var value []rune
 	for {
 		peek := lexer.peek()
-		if unicode.IsLetter(peek) || unicode.IsDigit(peek) {
+		if unicode.IsLetter(peek) || unicode.IsDigit(peek) || peek == '-' {
 			value = append(value, lexer.next())
 		} else if unicode.IsSpace(peek) || peek == 0 || strings.Contains(breakCharacters, string(peek)) {
 			break

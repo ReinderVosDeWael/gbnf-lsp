@@ -1,17 +1,64 @@
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
+import { https } from "follow-redirects";
 import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node";
 import * as fs from "fs";
+import { promisify } from "util";
 
+const chmod = promisify(fs.chmod);
 let client: LanguageClient;
 let outputChannel: vscode.OutputChannel;
 
-function getPlatformBinary(context: vscode.ExtensionContext): string {
+async function downloadFile(url: string, dest: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    https
+      .get(url, (response) => {
+        if (response.statusCode !== 200) {
+          return reject(
+            new Error(`Failed to get '${url}' (${response.statusCode})`)
+          );
+        }
+        response.pipe(file);
+        file.on("finish", () => {
+          file.close(async () => {
+            try {
+              await chmod(dest, 0o755);
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          });
+        });
+      })
+      .on("error", (err) => {
+        fs.unlink(dest, () => reject(err));
+      });
+  });
+}
+
+function getExtensionVersion(context: vscode.ExtensionContext): string {
+  const packageJsonPath = path.join(context.extensionPath, "package.json");
+  if (!fs.existsSync(packageJsonPath)) {
+    throw new Error(`package.json not found at ${packageJsonPath}`);
+  }
+
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+  if (!packageJson.version) {
+    throw new Error("Version not found in package.json");
+  }
+
+  return `v${packageJson.version}`;
+}
+
+async function getPlatformBinary(
+  context: vscode.ExtensionContext
+): Promise<string> {
   const supportedPlatforms = ["win32", "linux", "darwin"];
   if (supportedPlatforms.find((plat) => plat === os.platform()) === undefined) {
     throw new Error(`Unsupported platform: ${os.platform()}`);
@@ -27,10 +74,31 @@ function getPlatformBinary(context: vscode.ExtensionContext): string {
     binName += ".exe";
   }
 
-  return path.join(context.extensionPath, "bin", binName);
+  const binpath = path.join(context.extensionPath, binName);
+  if (!fs.existsSync(binpath)) {
+    const version = getExtensionVersion(context);
+    const url = `https://github.com/ReinderVosDeWael/gbnf-lsp/releases/download/${version}/${binName}`;
+
+    try {
+      outputChannel.appendLine(`Downloading binary from ${url}...`);
+      await downloadFile(url, binpath)
+        .then(() => {
+          if (os.platform() !== "win32") {
+            fs.chmodSync(binpath, 0o755);
+          }
+          outputChannel.appendLine(`Downloaded ${binName} successfully.`);
+        })
+        .catch((err) => {
+          throw new Error(`Failed to download binary: ${err.message}`);
+        });
+    } catch (err) {
+      throw new Error(`Error while fetching binary: ${err}`);
+    }
+  }
+  return binpath;
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   // Create output channel for logging
   outputChannel = vscode.window.createOutputChannel("GBNF LSP");
   outputChannel.show();
@@ -38,7 +106,7 @@ export function activate(context: vscode.ExtensionContext) {
   outputChannel.appendLine("Extension activating...");
 
   try {
-    const serverPath = getPlatformBinary(context);
+    const serverPath = await getPlatformBinary(context);
 
     if (!fs.existsSync(serverPath)) {
       outputChannel.appendLine(`ERROR: LSP server not found at ${serverPath}`);

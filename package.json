@@ -3,7 +3,7 @@
   "publisher": "ReinderVosdeWael",
   "displayName": "GBNF LSP (Alpha Version)",
   "description": "An LSP for GBNF",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -12,7 +12,6 @@
     "url": "git+https://github.com/ReinderVosDeWael/gbnf-lsp.git"
   },
   "files": [
-    "bin/**",
     "out/**",
     "syntaxes/**",
     "LICENSE",
@@ -60,6 +59,7 @@
     "publish": "npm run build && vsce package"
   },
   "devDependencies": {
+    "@types/follow-redirects": "^1.14.4",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.99.0",
@@ -77,6 +77,7 @@
   },
   "dependencies": {
     "@vscode/vsce": "^3.3.2",
+    "follow-redirects": "^1.15.9",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver-protocol": "^3.17.5"
   }

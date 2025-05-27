@@ -14,6 +14,14 @@ func TestAssignmentToken(t *testing.T) {
 	}
 }
 
+func TestAssignmentDashToken(t *testing.T) {
+	tokens := CollectTokens("ru-le ::= something")
+
+	if tokens[1].Type != GBNFParser.TokenAssignment {
+		t.Errorf("Expected TokenAssignment, not found")
+	}
+}
+
 func TestStringToken(t *testing.T) {
 	tokens := CollectTokens(`"hello world"`)
 

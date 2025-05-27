@@ -3,7 +3,7 @@
     "scopeName": "source.gbnf",
     "patterns": [
         {
-            "match": "([\\p{L}][\\p{L}0-9]*)\\s*::=",
+            "match": "([\\p{L}](?:[\\p{L}0-9\\-]*[\\p{L}0-9])?)\\s*::=",
             "captures": {
                 "1": {
                     "name": "entity.name.function.gbnf"
@@ -11,7 +11,7 @@
             }
         },
         {
-            "match": "([\\p{L}][\\p{L}0-9]*)",
+            "match": "([\\p{L}](?:[\\p{L}0-9\\-]*[\\p{L}0-9])?)",
             "name": "variable.parameter.gbnf"
         },
         {
