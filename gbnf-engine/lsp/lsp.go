@@ -17,7 +17,7 @@ func Run() {
 	reader := bufio.NewReader(os.Stdin)
 	debugLogger = log.New(os.Stderr, "LSP: ", log.Ltime|log.Lshortfile)
 	for {
-		debugLogger.Printf("Number of open files: %v", len(openFiles))
+		debugLogger.Printf("Number of open files: %v", len(OpenFiles))
 		var contentLength int
 		for {
 			header, err := reader.ReadString('\n')

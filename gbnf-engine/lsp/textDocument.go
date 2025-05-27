@@ -26,7 +26,7 @@ func handleTextDocumentDidOpen(request Request) {
 	}
 
 	newFile := TextToOpenFile(data.TextDocument.Text)
-	openFiles[data.TextDocument.URI] = &newFile
+	OpenFiles[data.TextDocument.URI] = &newFile
 	sendDiagnostics(data.TextDocument.URI)
 }
 
@@ -52,7 +52,7 @@ func handleTextDocumentDidChange(request Request) {
 	}
 
 	newFile := TextToOpenFile(data.ContentChanges[0].Text)
-	openFiles[data.TextDocument.URI] = &newFile
+	OpenFiles[data.TextDocument.URI] = &newFile
 	sendDiagnostics(data.TextDocument.URI)
 }
 
@@ -74,7 +74,7 @@ func handleTextDocumentDidClose(request Request) {
 		fmt.Fprintf(os.Stderr, "Failed to unmarshal didClose: %v\nRaw: %s\n", err, params)
 		return
 	}
-	delete(openFiles, data.TextDocument.URI)
+	delete(OpenFiles, data.TextDocument.URI)
 }
 
 type Position struct {
@@ -117,7 +117,7 @@ func handleTextDocumentCompletion(request Request) {
 		return
 	}
 
-	file := openFiles[params.TextDocument.URI]
+	file := OpenFiles[params.TextDocument.URI]
 	var items []CompletionItem
 
 	for _, name := range file.GetRuleNames() {
@@ -168,7 +168,7 @@ func handleTextDocumentRename(request Request) {
 		return
 	}
 
-	file := openFiles[params.TextDocument.URI]
+	file := OpenFiles[params.TextDocument.URI]
 	token := getTokenAtPosition(file.Tokens, params.Position)
 
 	if token.Type != GBNFParser.TokenIdentifier {
@@ -229,7 +229,7 @@ func handleTextDocumentDefinition(request Request) {
 		return
 	}
 
-	file := openFiles[params.TextDocument.URI]
+	file := OpenFiles[params.TextDocument.URI]
 	token := getTokenAtPosition(file.Tokens, params.Position)
 	if token == nil || token.Type != GBNFParser.TokenIdentifier {
 		sendResponse(request.ID, nil)

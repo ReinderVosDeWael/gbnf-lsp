@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"gbnflsp/gbnf-engine/GBNFParser"
+	"slices"
 )
 
 type Diagnostic struct {
 	Range    Range  `json:"range"`
 	Message  string `json:"message"`
-	Severity int    `json:"severity"` // 1 = Error, 2 = Warning
+	Severity int    `json:"severity"`
 	Source   string `json:"source,omitempty"`
 }
 
@@ -34,7 +35,7 @@ func sendDiagnostics(uri string) {
 }
 
 func createDiagnostics(uri string) []*Diagnostic {
-	file := openFiles[uri]
+	file := OpenFiles[uri]
 	errors := file.ParserErrors
 	diags := []*Diagnostic{}
 	for _, err := range errors {
@@ -56,16 +57,17 @@ func createDiagnostics(uri string) []*Diagnostic {
 		})
 	}
 
-	rootRule := ruleMustIncludeRoot(uri)
+	rootRule := RuleMustIncludeRoot(uri)
 	if rootRule != nil {
 		diags = append(diags, rootRule)
 	}
+	diags = append(diags, RuleMustDefineAllVariables(uri)...)
 
 	return diags
 }
 
-func ruleMustIncludeRoot(uri string) *Diagnostic {
-	file := openFiles[uri]
+func RuleMustIncludeRoot(uri string) *Diagnostic {
+	file := OpenFiles[uri]
 	for _, node := range file.AST.Children {
 		if node.Type == GBNFParser.NodeDeclaration && node.Token.Value == "root" {
 			return nil
@@ -82,4 +84,46 @@ func ruleMustIncludeRoot(uri string) *Diagnostic {
 		Severity: 1,
 		Source:   "gbnf-lsp",
 	}
+}
+
+func RuleMustDefineAllVariables(uri string) []*Diagnostic {
+	file := OpenFiles[uri]
+	nodeNames := []string{}
+	for _, node := range file.AST.Children {
+		if node.Type == GBNFParser.NodeDeclaration {
+			nodeNames = append(nodeNames, node.Token.Value)
+		}
+	}
+	undefinedNodes := []*Diagnostic{}
+	for _, node := range file.AST.Children {
+		undefinedNodes = append(undefinedNodes, recursiveUndefinedNodeSearch(node, nodeNames)...)
+	}
+	return undefinedNodes
+}
+
+func recursiveUndefinedNodeSearch(node *GBNFParser.Node, targetNames []string) []*Diagnostic {
+	if node == nil || node.Token == nil {
+		return nil
+	}
+	undefinedNodes := []*Diagnostic{}
+	if node.Token.Type == GBNFParser.TokenIdentifier && !slices.Contains(targetNames, node.Token.Value) {
+		undefinedNodes = append(undefinedNodes, &Diagnostic{
+			Range: Range{
+				Start: Position{
+					Line: node.Token.Line, Character: node.Token.Column,
+				},
+				End: Position{Line: node.Token.Line, Character: node.Token.Column + len(node.Token.Value)},
+			},
+			Message:  "Variable `" + node.Token.Value + "` undefined.",
+			Severity: 1,
+			Source:   "gbnf-lsp",
+		})
+	}
+	for _, child := range node.Children {
+		if child != nil {
+			undefinedNodes = append(undefinedNodes, recursiveUndefinedNodeSearch(child, targetNames)...)
+		}
+	}
+	return undefinedNodes
+
 }

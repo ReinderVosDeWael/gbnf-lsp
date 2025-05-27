@@ -59,3 +59,46 @@ func TestGetRuleNamesNestedAssignments(t *testing.T) {
 		}
 	}
 }
+
+func TestRuleMustDefineRoot(t *testing.T) {
+	text := `smoot ::= arg`
+
+	openFile := lsp.TextToOpenFile(text)
+	uri := "fake"
+	lsp.OpenFiles[uri] = &openFile
+
+	diagnostics := lsp.RuleMustIncludeRoot(uri)
+
+	if diagnostics == nil {
+		t.Fatalf("Expected 1 diagnostic, got nil")
+	}
+
+	if diagnostics.Message != "No `root` node found." {
+		t.Errorf("Unexpected diagnostic message: %s", diagnostics.Message)
+	}
+	if diagnostics.Range.Start.Line != 0 || diagnostics.Range.Start.Character != 0 {
+		t.Errorf("Unexpected diagnostic position: %+v", diagnostics.Range.Start)
+	}
+}
+
+func TestRuleMustDefineAllVariablesUndefinedReference(t *testing.T) {
+	text := `root ::= arg`
+
+	openFile := lsp.TextToOpenFile(text)
+	uri := "fake"
+	lsp.OpenFiles[uri] = &openFile
+
+	diagnostics := lsp.RuleMustDefineAllVariables(uri)
+
+	if len(diagnostics) != 1 {
+		t.Fatalf("Expected 1 diagnostic, got %d", len(diagnostics))
+	}
+
+	diag := diagnostics[0]
+	if diag.Message != "Variable `arg` undefined." {
+		t.Errorf("Unexpected diagnostic message: %s", diag.Message)
+	}
+	if diag.Range.Start.Line != 0 || diag.Range.Start.Character != 9 {
+		t.Errorf("Unexpected diagnostic position: %+v", diag.Range.Start)
+	}
+}

@@ -8,7 +8,7 @@ import (
 )
 
 var shutdownRequested = false
-var openFiles = map[string]*OpenFile{}
+var OpenFiles = map[string]*OpenFile{}
 
 type Request struct {
 	Jsonrpc string
