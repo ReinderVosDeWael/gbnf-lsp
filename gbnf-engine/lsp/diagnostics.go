@@ -19,6 +19,8 @@ type PublishDiagnosticsParams struct {
 	Diagnostics []*Diagnostic `json:"diagnostics"`
 }
 
+const SOURCE = "gbnf-lsp"
+
 func sendDiagnostics(uri string) {
 	diags := createDiagnostics(uri)
 	msg := map[string]interface{}{
@@ -39,7 +41,6 @@ func createDiagnostics(uri string) []*Diagnostic {
 	errors := file.ParserErrors
 	diags := []*Diagnostic{}
 	for _, err := range errors {
-		debugLogger.Printf("Found error: %v", err)
 		diags = append(diags, &Diagnostic{
 			Range: Range{
 				Start: Position{
@@ -53,19 +54,26 @@ func createDiagnostics(uri string) []*Diagnostic {
 			},
 			Message:  err.Message,
 			Severity: 1,
-			Source:   "gnbf-lsp",
+			Source:   SOURCE,
 		})
 	}
 
-	rootRule := RuleMustIncludeRoot(uri)
-	if rootRule != nil {
-		diags = append(diags, rootRule)
-	}
-	diags = append(diags, RuleMustDefineAllVariables(uri)...)
+	diags = appendIfNotNil(diags, RuleMustIncludeRoot(uri))
+	diags = appendIfNotNil(diags, RuleMustDefineAllVariables(uri)...)
+	diags = appendIfNotNil(diags, RuleMustUseAllVariables(uri)...)
+	debugLogger.Printf("Found error: %v", diags)
 
 	return diags
 }
 
+func appendIfNotNil[T any](slice []*T, values ...*T) []*T {
+	for _, val := range values {
+		if val != nil {
+			slice = append(slice, val)
+		}
+	}
+	return slice
+}
 func RuleMustIncludeRoot(uri string) *Diagnostic {
 	file := OpenFiles[uri]
 	for _, node := range file.AST.Children {
@@ -82,7 +90,7 @@ func RuleMustIncludeRoot(uri string) *Diagnostic {
 		},
 		Message:  "No `root` node found.",
 		Severity: 1,
-		Source:   "gbnf-lsp",
+		Source:   SOURCE,
 	}
 }
 
@@ -116,7 +124,7 @@ func recursiveUndefinedNodeSearch(node *GBNFParser.Node, targetNames []string) [
 			},
 			Message:  "Variable `" + node.Token.Value + "` undefined.",
 			Severity: 1,
-			Source:   "gbnf-lsp",
+			Source:   SOURCE,
 		})
 	}
 	for _, child := range node.Children {
@@ -126,4 +134,53 @@ func recursiveUndefinedNodeSearch(node *GBNFParser.Node, targetNames []string) [
 	}
 	return undefinedNodes
 
+}
+
+func RuleMustUseAllVariables(uri string) []*Diagnostic {
+	file := OpenFiles[uri]
+	declared := map[string]*GBNFParser.Node{}
+	used := map[string]bool{}
+
+	for _, node := range file.AST.Children {
+		if node.Type == GBNFParser.NodeDeclaration {
+			declared[node.Token.Value] = node
+		}
+	}
+
+	for _, node := range file.AST.Children {
+		markUsedIdentifiers(node, used)
+	}
+
+	unusedDiagnostics := []*Diagnostic{}
+	for name, node := range declared {
+		if name == "root" {
+			continue
+		}
+		if _, ok := used[name]; !ok {
+			diag := &Diagnostic{
+				Range: Range{
+					Start: Position{Line: node.Token.Line, Character: node.Token.Column},
+					End:   Position{Line: node.Token.Line, Character: node.Token.Column + len(name)},
+				},
+				Message:  fmt.Sprintf("Variable `%s` is declared but never used.", name),
+				Severity: 2,
+				Source:   SOURCE,
+			}
+			unusedDiagnostics = append(unusedDiagnostics, diag)
+		}
+	}
+
+	return unusedDiagnostics
+}
+
+func markUsedIdentifiers(node *GBNFParser.Node, used map[string]bool) {
+	if node == nil {
+		return
+	}
+	if node.Type == GBNFParser.NodeToken && node.Token.Type == GBNFParser.TokenIdentifier {
+		used[node.Token.Value] = true
+	}
+	for _, child := range node.Children {
+		markUsedIdentifiers(child, used)
+	}
 }
