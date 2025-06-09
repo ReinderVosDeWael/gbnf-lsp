@@ -12,5 +12,30 @@
     { "open": "(", "close": ")" },
     { "open": "[", "close": "]" },
     { "open": "{", "close": "}" }
+  ],
+  "wordPattern": "[a-zA-Z0-9-]+",
+  "onEnterRules": [
+    {
+      "beforeText": "^\\s*\\(\\s*$",
+      "afterText": "^\\s*\\)\\s*$",
+      "action": {
+        "indent": "indentOutdent",
+        "removeText": 0
+      }
+    },
+    {
+      "beforeText": ".*\\(\\s*$",
+      "action": { "indent": "indent" }
+    },
+    {
+      "beforeText": "^\\s*\\)",
+      "action": { "indent": "outdent" }
+    },
+    {
+      "beforeText": "^\\s+\\S.*$",
+      "action": {
+        "indent": "none"
+      }
+    }
   ]
 }

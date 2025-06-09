@@ -3,7 +3,7 @@
   "publisher": "ReinderVosdeWael",
   "displayName": "GBNF LSP (Alpha Version)",
   "description": "An LSP for GBNF",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -15,13 +15,11 @@
     "out/**",
     "syntaxes/**",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "language-configuration.json"
   ],
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onLanguage:gbnf"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -30,7 +28,8 @@
         "id": "gbnf",
         "extensions": [
           ".gbnf"
-        ]
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [

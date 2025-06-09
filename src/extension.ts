@@ -74,7 +74,11 @@ async function getPlatformBinary(
     binName += ".exe";
   }
 
-  const binpath = path.join(context.extensionPath, binName);
+  const bindir = path.join(context.extensionPath, "bin");
+  if (!fs.existsSync(bindir)) {
+    fs.mkdirSync(bindir);
+  }
+  const binpath = path.join(bindir, binName);
   if (!fs.existsSync(binpath)) {
     const version = getExtensionVersion(context);
     const url = `https://github.com/ReinderVosDeWael/gbnf-lsp/releases/download/${version}/${binName}`;
